@@ -19,10 +19,10 @@ from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
 from langchain_core.messages import HumanMessage, AIMessage
-from src.utilities.create_retriever_from_md_files import create_retriever_from_md_files, find_md_files
-from src.utilities.create_retriever_from_urls import create_retriever_from_urls, load_urls
-from src.utilities.image_saver import save_graph_image
-from create_tools import create_tools
+from utilities.create_retriever_from_md_files import create_retriever_from_md_files, find_md_files
+from utilities.create_retriever_from_urls import create_retriever_from_urls, load_urls
+from utilities.image_saver import save_graph_image
+from find_tools import find_tools
 from create_graph_with_tools import create_graph_with_tools
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -30,7 +30,7 @@ from langgraph.checkpoint.memory import MemorySaver
 def main():
 
     # Create tools for the chatbot
-    tools = create_tools()
+    tools = find_tools()
     print("\nCount of tools created: ", len(tools))
 
     # Create the chatbot model
@@ -54,7 +54,6 @@ def main():
 
     # Function to handle conversation updates with thread_id for memory
     def stream_graph_updates(user_input: str, thread_id: str):
-        config = {"configurable": {"thread_id": thread_id}}
 
         # Stream events and print responses
         events = graph.stream(
@@ -65,14 +64,30 @@ def main():
             if (isinstance(message, AIMessage) and message.content):
                 message.pretty_print()
 
+    # Initial prompt for the chatbot. This can be customized as needed.
+    initial_prompt = """
+            请优先使用所提供的工具回答用户的问题。
+            每当调用了一个工具，请在回答后以如下的格式加以说明：
+            “回答这个问题我用到了工具：【工具的名字】”。
+
+            现在，请先说“我发现了以下的工具：”，然后用带序号的列表，列出你所有可用的工具，包括工具名称和工具描述。
+            并在之后说“我可以使用这些工具辅助回答您的问题。”
+            """
+
     # Chatbot loop with memory enabled using thread_id
     while True:
         print("==================================== Users can input 'quit' to quit.")
         thread_id = input("Enter a thread ID for this session: ")
+        
+        config = {"configurable": {"thread_id": thread_id}}
+        if (len(graph.get_state(config).values) == 0): # If the graph state is empty, initialize the chatbot
+            stream_graph_updates(initial_prompt, thread_id)
+
         user_input = input("User: ")
         if user_input.lower() == "quit":
             print("Goodbye!")
             break
+
 
         stream_graph_updates(user_input, thread_id)
 
