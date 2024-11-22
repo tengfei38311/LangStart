@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv, find_dotenv
 from langchain_community.vectorstores import DocArrayInMemorySearch
 from langchain_openai.embeddings import OpenAIEmbeddings
 
@@ -22,49 +21,20 @@ def create_retriever_from_md_files(md_files):
         print("Warning: No sections were parsed from the markdown files.")
         return None
 
+    # sections = [
+    #     "我们公司的前台叫小丽。",
+    #     "公司附近国贸三期楼下的烤鱼很好吃。",
+    #     "你的直属领导是张经理。",
+    #     "请事假需要提前一天向直属领导提交申请。病假无需提前请假，可以于事后向直属领导补办，但需要有医院的就诊记录。",
+    # ]
+
     # Create a vector store and retriever
     vectorstore = DocArrayInMemorySearch.from_texts(
         sections,
         embedding=OpenAIEmbeddings(),
     )
     retriever = vectorstore.as_retriever()
-    print("Retriever created successfully.")
     return retriever
-
-
-# def load_md_files(path):
-#     """
-#     Load content from markdown (.md) files.
-#     If the given path is a folder, loads all .md files in the folder.
-#     If the path is a file ending with .md, loads only that file.
-#     """
-#     md_files = []
-
-#     # Check if the path exists
-#     if not os.path.exists(path):
-#         print(f"Warning: Path not found: {path}")
-#         return md_files
-
-#     # Process folder or file
-#     path_obj = Path(path)
-#     if path_obj.is_dir():
-#         # Get all .md files in the folder
-#         md_files = list(path_obj.glob("*.md"))
-#         if not md_files:
-#             print(f"Warning: No markdown files found in the folder: {path}")
-#     elif path_obj.is_file() and path_obj.suffix == ".md":
-#         md_files = [path_obj]
-#     else:
-#         print(f"Warning: The provided path is not a valid folder or markdown file: {path}")
-#         return md_files
-
-#     # Load content from markdown files
-#     content = []
-#     for md_file in md_files:
-#         with md_file.open("r", encoding="utf-8") as file:
-#             content.append({"file_name": md_file.name, "file_path": str(md_file)})
-
-#     return content
 
 def find_md_files(md_path):
     """

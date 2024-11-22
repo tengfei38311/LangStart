@@ -1,5 +1,5 @@
 import os
-from utilities.create_retriever_from_urls import create_retriever_from_urls, load_urls
+from src.utilities.create_retriever_from_urls import create_retriever_from_urls, load_urls
 from langchain.tools.retriever import create_retriever_tool
 from langchain_community.tools.tavily_search import TavilySearchResults
 

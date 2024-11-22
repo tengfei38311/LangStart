@@ -1,7 +1,7 @@
 import os
 import traceback
 
-def save_graph_image(graph, filename):
+def save_graph_image(graph, filename, silent=True):
     """
     Saves the generated image of the graph structure in the same directory as the script.
     
@@ -19,8 +19,8 @@ def save_graph_image(graph, filename):
         # Save the generated image of the graph structure
         with open(image_path, "wb") as f:
             f.write(graph.get_graph().draw_mermaid_png())
-        
-        print(f"Image saved as {image_path}")
+        if (silent == False):
+            print(f"Image saved as {image_path}")
     except Exception as e:
         print("An error occurred while saving the image:", e)
         traceback.print_exc()

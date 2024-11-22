@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from langchain_openai import ChatOpenAI
 
+
 # 从当前文件夹或父文件夹中加载.env文件的配置（成为全局可访问的静态变量）。
 load_dotenv(find_dotenv())
 
@@ -19,22 +20,46 @@ from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
 from langchain_core.messages import HumanMessage, AIMessage
-from utilities.create_retriever_from_md_files import create_retriever_from_md_files, find_md_files
-from utilities.create_retriever_from_urls import create_retriever_from_urls, load_urls
-from utilities.image_saver import save_graph_image
-from find_tools import find_tools
-from create_graph_with_tools import create_graph_with_tools
+from src.utilities.image_saver import save_graph_image
+from src.tools.create_tools import create_tools
+from src.framework.create_graph_with_tools import create_graph_with_tools
 from langgraph.checkpoint.memory import MemorySaver
 
+#### Configuration
+app_data = "app_data"
+model_name = "gpt-4o-mini"
+initial_prompt = """
+        1. 请说“你好，我的型号是【你的模型名称】，我是一个可以使用工具回答问题的聊天机器人。”
+        2. 请说“我发现了以下的工具：”，然后用带序号的列表，列出你所有可用的工具，包括工具名称和工具描述。
+        3. 请说“我可以使用这些工具辅助回答您的问题。”
+
+        在后续的对话中，请优先使用所提供的工具回答用户的问题。
+        每当调用了一个工具，请在回答后以如下的格式加以说明：
+        “回答这个问题我用到了工具：【工具的名字】”。
+        """
 
 def main():
 
+    # import sys
+
+    # def trace_calls(frame, event, arg):
+    #     if event != 'call':
+    #         return
+    #     code = frame.f_code
+    #     if 'httpx' in code.co_filename and 'Headers' in code.co_name:
+    #         print(f"Calling {code.co_name} in {code.co_filename}")
+    #         print("Locals:", frame.f_locals)
+    #     return trace_calls
+
+    # sys.settrace(trace_calls)
+
+
     # Create tools for the chatbot
-    tools = find_tools()
-    print("\nCount of tools created: ", len(tools))
+    app_data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), app_data)
+    tools = create_tools(app_data_folder)
 
     # Create the chatbot model
-    llm = ChatOpenAI(model="gpt-4o-mini")
+    llm = ChatOpenAI(model=model_name)
     llm_with_tools = llm.bind_tools(tools)
 
     # Define the structure of the chatbot's state
@@ -64,16 +89,6 @@ def main():
             if (isinstance(message, AIMessage) and message.content):
                 message.pretty_print()
 
-    # Initial prompt for the chatbot. This can be customized as needed.
-    initial_prompt = """
-            请优先使用所提供的工具回答用户的问题。
-            每当调用了一个工具，请在回答后以如下的格式加以说明：
-            “回答这个问题我用到了工具：【工具的名字】”。
-
-            现在，请先说“我发现了以下的工具：”，然后用带序号的列表，列出你所有可用的工具，包括工具名称和工具描述。
-            并在之后说“我可以使用这些工具辅助回答您的问题。”
-            """
-
     # Chatbot loop with memory enabled using thread_id
     while True:
         print("==================================== Users can input 'quit' to quit.")
@@ -82,6 +97,7 @@ def main():
         config = {"configurable": {"thread_id": thread_id}}
         if (len(graph.get_state(config).values) == 0): # If the graph state is empty, initialize the chatbot
             stream_graph_updates(initial_prompt, thread_id)
+            print("==================================== Users can input 'quit' to quit.")
 
         user_input = input("User: ")
         if user_input.lower() == "quit":
