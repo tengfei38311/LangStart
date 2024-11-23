@@ -40,19 +40,6 @@ initial_prompt = """
 
 def main():
 
-    # import sys
-
-    # def trace_calls(frame, event, arg):
-    #     if event != 'call':
-    #         return
-    #     code = frame.f_code
-    #     if 'httpx' in code.co_filename and 'Headers' in code.co_name:
-    #         print(f"Calling {code.co_name} in {code.co_filename}")
-    #         print("Locals:", frame.f_locals)
-    #     return trace_calls
-
-    # sys.settrace(trace_calls)
-
 
     # Create tools for the chatbot
     app_data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), app_data)
